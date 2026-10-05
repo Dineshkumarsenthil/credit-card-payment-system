@@ -72,6 +72,13 @@ coverage run manage.py test && coverage report
 |---|---|
 | `<Dk>` | `<Dinesh@2004>` |
 
+## customer Credentials (for review)
+
+| Username | Password |
+|---|---|
+| `<Levix>` | `<Levi@123>` |
+
+
 ## Security
 
 - Passwords stored as **PBKDF2-SHA256** hashes (Django default).
