@@ -42,7 +42,7 @@ docker compose up --build
 |---|---|
 | Frontend | http://localhost:5173 |
 | Django API | http://localhost:8000/admin/ |
-| FastAPI payments | http://localhost:8001/docs |
+| FastAPI Payment API (Swagger) | http://localhost:8001/docs |
 | MySQL (host port) | localhost:3307 |
 
 ### Load the database dump (optional)
