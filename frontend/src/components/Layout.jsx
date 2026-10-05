@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 
 const link = ({ isActive }) =>
-  `block rounded-md px-3 py-2 text-sm font-medium ${isActive ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`;
+  `block rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`;
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -15,7 +15,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen md:flex">
-      <aside className="bg-brand-dark p-4 text-white md:sticky md:top-0 md:flex md:h-screen md:w-60 md:flex-col md:justify-between">
+      <aside className="bg-gradient-to-b from-brand-dark to-[#0f0d33] p-4 text-white md:sticky md:top-0 md:flex md:h-screen md:w-60 md:flex-col md:justify-between">
         <div>
           <div className="mb-4 px-3 text-lg font-semibold">SecurePay</div>
           <nav className="flex gap-1 overflow-x-auto md:flex-col">
@@ -29,7 +29,7 @@ export default function Layout() {
         <div className="mt-4 border-t border-white/15 pt-4">
           <div className="px-3 text-sm">{user?.username}</div>
           <div className="mb-2 px-3 text-xs text-white/60">{user?.is_staff ? "Administrator" : "Customer"}</div>
-          <button onClick={signOut} className="w-full rounded-md px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10">
+          <button onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10">
             Log out
           </button>
         </div>

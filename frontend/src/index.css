@@ -2,15 +2,15 @@
 
 @theme {
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --color-paper: #f3f4f0;
-  --color-ink: #16201c;
-  --color-muted: #5d6b64;
-  --color-line: #d9ddd5;
-  --color-brand: #0f5c4d;
-  --color-brand-dark: #0a3f35;
-  --color-ok: #1b7a4b;
-  --color-warn: #b7791f;
-  --color-bad: #b3372f;
+  --color-paper: #f5f6fb;
+  --color-ink: #111827;
+  --color-muted: #6b7280;
+  --color-line: #e5e7eb;
+  --color-brand: #4338ca;
+  --color-brand-dark: #1e1b4b;
+  --color-ok: #059669;
+  --color-warn: #d97706;
+  --color-bad: #dc2626;
 }
 
 body {

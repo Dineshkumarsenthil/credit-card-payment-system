@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, errMsg } from "../api";
+import CardVisual, { brandOf, fmtNumber } from "../components/CardVisual.jsx";
 import { Alert, Button, Empty, Field, PageHeader, Panel } from "../components/ui.jsx";
 
 const blank = { card_holder: "", card_number: "", cvv: "", expiry_month: "", expiry_year: "" };
@@ -49,6 +50,13 @@ export default function Cards() {
       <PageHeader title="Cards" subtitle="The full card number and CVV are checked, then discarded. Only the masked number is stored." />
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Add a card">
+          <CardVisual
+            className="mb-5"
+            brand={brandOf(f.card_number)}
+            number={fmtNumber(f.card_number)}
+            holder={f.card_holder.toUpperCase() || "YOUR NAME"}
+            expiry={f.expiry_month && f.expiry_year ? `${String(f.expiry_month).padStart(2, "0")}/${String(f.expiry_year).slice(-2)}` : "MM/YY"}
+          />
           <form onSubmit={submit} className="space-y-4">
             <Alert>{error}</Alert>
             <Alert kind="ok">{ok}</Alert>
@@ -69,12 +77,14 @@ export default function Cards() {
           ) : (
             <ul className="space-y-3">
               {cards.map((c) => (
-                <li key={c.id} className="flex items-center justify-between rounded-md border border-line p-3">
-                  <div>
-                    <div className="text-sm font-medium">{c.brand} {c.masked_number}</div>
-                    <div className="text-xs text-muted">{c.card_holder} · expires {String(c.expiry_month).padStart(2, "0")}/{c.expiry_year}</div>
-                  </div>
-                  <Button variant="danger" onClick={() => remove(c.id)}>Delete</Button>
+                <li key={c.id} className="space-y-2">
+                  <CardVisual
+                    brand={c.brand}
+                    number={c.masked_number}
+                    holder={c.card_holder.toUpperCase()}
+                    expiry={`${String(c.expiry_month).padStart(2, "0")}/${String(c.expiry_year).slice(-2)}`}
+                  />
+                  <Button variant="danger" onClick={() => remove(c.id)}>Delete card</Button>
                 </li>
               ))}
             </ul>
