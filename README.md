@@ -34,15 +34,15 @@ credit-card-payment-system/
 ```bash
 git clone https://github.com/Dineshkumarsenthil/credit-card-payment-system.git
 cd credit-card-payment-system
-cp .env.example .env        # then edit values if needed
+cp .env.example .env        
 docker compose up --build
 ```
 
 | Service | URL |
 |---|---|
 | Frontend | http://localhost:5173 |
-| Django API | http://localhost:8000 |
-| FastAPI payments | http://localhost:8001 |
+| Django API | http://localhost:8000/admin/ |
+| FastAPI payments | http://localhost:8001/docs |
 | MySQL (host port) | localhost:3307 |
 
 ### Load the database dump (optional)
