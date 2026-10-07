@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -16,6 +18,10 @@ class Card(models.Model):
     )
     expiry_year = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(2000), MaxValueValidator(2100)]
+    )
+    # Used by the dashboard to work out the available credit
+    credit_limit = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("100000.00")
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -18,8 +18,10 @@ class Card(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int]
+    masked_number: Mapped[str] = mapped_column(String(19))
     expiry_month: Mapped[int]
     expiry_year: Mapped[int]
+    credit_limit: Mapped[Decimal] = mapped_column(Numeric(12, 2))
 
 
 class Transaction(Base):

@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .auth import get_current_user_id
+from .dashboard import router as dashboard_router
 from .database import get_db
 from .models import Card, Transaction, utcnow
 
@@ -51,6 +52,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": "System", "description": "Service health"},
         {"name": "Payments", "description": "Create and list simulated payments"},
+        {"name": "Dashboard", "description": "Usage summary for the logged-in user"},
     ],
 )
 app.add_middleware(
@@ -59,6 +61,9 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+# GET /dashboard/summary
+app.include_router(dashboard_router)
 
 
 SWAGGER_CDN = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5"
