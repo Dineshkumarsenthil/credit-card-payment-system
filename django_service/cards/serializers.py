@@ -30,13 +30,17 @@ def detect_brand(number: str) -> str:
 class CardSerializer(serializers.ModelSerializer):
     """Read-only view of a saved card (safe fields only)."""
 
+class CardSerializer(serializers.ModelSerializer):
+    """Read-only view of a saved card (safe fields only)."""
+
     class Meta:
         model = Card
         fields = (
             "id", "card_holder", "brand", "masked_number", "last4",
-            "expiry_month", "expiry_year", "created_at",
+            "expiry_month", "expiry_year", "credit_limit",
+            "is_blocked", "blocked_at", "created_at",
         )
-
+        read_only_fields = fields
 
 class CardCreateSerializer(serializers.Serializer):
     card_holder = serializers.CharField(max_length=100)

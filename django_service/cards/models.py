@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Card(models.Model):
@@ -23,6 +24,8 @@ class Card(models.Model):
     credit_limit = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal("100000.00")
     )
+    is_blocked = models.BooleanField(default=False)
+    blocked_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -31,3 +34,13 @@ class Card(models.Model):
 
     def __str__(self):
         return f"{self.brand} {self.masked_number}"
+
+    def block(self):
+        self.is_blocked = True
+        self.blocked_at = timezone.now()
+        self.save(update_fields=["is_blocked", "blocked_at"])
+
+    def unblock(self):
+        self.is_blocked = False
+        self.blocked_at = None
+        self.save(update_fields=["is_blocked", "blocked_at"])

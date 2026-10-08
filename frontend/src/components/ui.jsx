@@ -6,7 +6,7 @@ export function Field({ label, hint, ...props }) {
       <span className="mb-1 block text-sm font-medium">{label}</span>
       <input
         {...props}
-        className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+        className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
       />
       {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
     </label>
@@ -19,7 +19,7 @@ export function Select({ label, children, ...props }) {
       <span className="mb-1 block text-sm font-medium">{label}</span>
       <select
         {...props}
-        className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+        className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
       >
         {children}
       </select>
@@ -29,8 +29,8 @@ export function Select({ label, children, ...props }) {
 
 const variants = {
   primary: "bg-brand text-white shadow-sm hover:bg-brand-dark",
-  ghost: "border border-line bg-white text-ink hover:bg-paper",
-  danger: "border border-bad/40 bg-white text-bad hover:bg-bad/10",
+  ghost: "border border-line bg-surface text-ink hover:bg-paper",
+  danger: "border border-bad/40 bg-surface text-bad hover:bg-bad/10",
 };
 
 export function Button({ variant = "primary", className = "", ...props }) {
@@ -73,7 +73,7 @@ export function PageHeader({ title, subtitle, children }) {
 
 export function Panel({ title, children, className = "" }) {
   return (
-    <section className={`rounded-2xl border border-line bg-white p-6 shadow-sm ${className}`}>
+    <section className={`rounded-2xl border border-line bg-surface p-6 shadow-sm ${className}`}>
       {title && <h2 className="mb-4 text-base font-semibold">{title}</h2>}
       {children}
     </section>

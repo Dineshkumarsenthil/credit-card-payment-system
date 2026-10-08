@@ -18,6 +18,14 @@ services:
       timeout: 5s
       retries: 10
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: payment_mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"   # web inbox: http://localhost:8025
+      - "1025:1025"   # SMTP
+
   django:
     build: ./django_service
     container_name: payment_django
@@ -25,11 +33,14 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: "3306"
+      EMAIL_HOST: mailpit
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   fastapi:
     build: ./fastapi_service
@@ -38,11 +49,14 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: "3306"
+      EMAIL_HOST: mailpit
     ports:
       - "8001:8001"
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   frontend:
     build: ./frontend

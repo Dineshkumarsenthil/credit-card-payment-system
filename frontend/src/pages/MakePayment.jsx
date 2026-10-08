@@ -122,7 +122,7 @@ export default function MakePayment() {
           {card && <CardVisual brand={card.brand} number={card.masked_number} holder={card.card_holder.toUpperCase()} expiry={expiry} />}
 
           {step === "processing" && (
-            <div className="mt-5 rounded-2xl border border-line bg-white p-6 text-center shadow-sm">
+            <div className="mt-5 rounded-2xl border border-line bg-surface p-6 text-center shadow-sm">
               <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-line border-t-brand" />
               <div className="font-medium text-warn">PENDING</div>
               <p className="mt-1 text-sm text-muted">Waiting for the payment to settle...</p>
@@ -130,7 +130,7 @@ export default function MakePayment() {
           )}
 
           {step === "done" && result && (
-            <div className="mt-5 rounded-2xl border border-line bg-white p-6 text-center shadow-sm">
+            <div className="mt-5 rounded-2xl border border-line bg-surface p-6 text-center shadow-sm">
               <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white ${ok ? "bg-ok" : "bg-bad"}`}>{ok ? "✓" : "✕"}</div>
               <div className="text-sm text-muted">{ok ? "Payment successful" : "Payment failed"}</div>
               <div className="mt-1 text-3xl font-semibold">{money(result.amount, result.currency)}</div>

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { api, errMsg } from "../api";
 import { Alert, Button, Empty, PageHeader, Panel, Select, TxnTable } from "../components/ui.jsx";
+import CardManagement from "../components/CardManagement.jsx";
 import { dateTime, money } from "../utils";
 
 const tabs = [
   { id: "summary", label: "Daily summary", url: "/api/admin/summary/" },
   { id: "users", label: "Users", url: "/api/admin/users/" },
-  { id: "cards", label: "Cards", url: "/api/admin/cards/" },
+  { id: "cards", label: "Cards", url: null },
   { id: "transactions", label: "Transactions", url: "/api/admin/transactions/" },
 ];
 
@@ -41,7 +42,14 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const current = tabs.find((t) => t.id === tab);
-    setLoading(true); setError("");
+    setError("");
+    // The Cards tab loads its own data inside CardManagement
+    if (!current.url) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     api.get(current.url, { params: tab === "transactions" && status ? { status } : {} })
       .then((r) => setData(r.data))
       .catch((e) => { setData([]); setError(errMsg(e)); })
@@ -64,7 +72,7 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <PageHeader title="Admin" subtitle="Manage users and review cards, transactions and daily payment totals.">
+      <PageHeader title="Admin" subtitle="Manage users and cards, and review transactions and daily payment totals.">
         <Button onClick={exportCsv}>Export transactions to CSV</Button>
       </PageHeader>
 
@@ -94,7 +102,8 @@ export default function AdminDashboard() {
             </Select>
           </div>
         )}
-        {loading ? <p className="text-sm text-muted">Loading...</p> : (
+        {tab === "cards" && <CardManagement />}
+        {tab !== "cards" && (loading ? <p className="text-sm text-muted">Loading...</p> : (
           <>
             {tab === "summary" && (
               <Table
@@ -108,15 +117,9 @@ export default function AdminDashboard() {
                 rows={data.map((u) => [u.id, u.username, u.email, u.is_staff ? "Admin" : "Customer", dateTime(u.date_joined)])}
               />
             )}
-            {tab === "cards" && (
-              <Table
-                head={["ID", "User", "Brand", "Card", "Expiry"]}
-                rows={data.map((c) => [c.id, c.username, c.brand, c.masked_number, `${String(c.expiry_month).padStart(2, "0")}/${c.expiry_year}`])}
-              />
-            )}
             {tab === "transactions" && <TxnTable rows={data} showUser />}
           </>
-        )}
+        ))}
       </Panel>
     </>
   );

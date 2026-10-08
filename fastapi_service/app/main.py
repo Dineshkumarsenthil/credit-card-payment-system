@@ -7,17 +7,18 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .auth import get_current_user_id
 from .dashboard import router as dashboard_router
 from .database import get_db
 from .models import Card, Transaction, utcnow
+from .notifications import queue_payment_alerts
 
 SUCCESS_RATE = float(os.getenv("PAYMENT_SUCCESS_RATE", "0.8"))
 FAILURE_REASONS = [
@@ -47,7 +48,8 @@ app = FastAPI(
         "(`POST /api/auth/login/`), copy the `access` token and click "
         "**Authorize** here.\n\n"
         "**Security:** no real payment gateway is used, the CVV is never received "
-        "or stored, and users can only pay with their own cards."
+        "or stored, and users can only pay with their own cards. Blocked cards and "
+        "payments above the available credit are rejected."
     ),
     openapi_tags=[
         {"name": "System", "description": "Service health"},
@@ -140,6 +142,20 @@ class ErrorOut(BaseModel):
     detail: str
 
 
+def available_credit(db: Session, card: Card) -> Decimal:
+    """Credit limit minus the money already spent on this card.
+
+    Only SUCCESS payments count as spent. If your dashboard.py counts
+    PENDING payments too, change the filter here so both agree.
+    """
+    spent = db.scalar(
+        select(func.coalesce(func.sum(Transaction.amount), 0)).where(
+            Transaction.card_id == card.id, Transaction.status == "SUCCESS"
+        )
+    )
+    return Decimal(card.credit_limit) - Decimal(spent)
+
+
 @app.get("/health", tags=["System"], summary="Health check")
 def health():
     return {"status": "ok"}
@@ -153,18 +169,20 @@ def health():
     summary="Make a simulated payment",
     description=(
         "Creates a PENDING transaction, simulates the gateway and stores the "
-        "final SUCCESS or FAILED result. The card must belong to the logged-in user "
-        "and must not be expired."
+        "final SUCCESS or FAILED result. The card must belong to the logged-in user, "
+        "must not be expired or blocked, and the amount must fit in the available credit."
     ),
     responses={
-        400: {"model": ErrorOut, "description": "Card has expired"},
+        400: {"model": ErrorOut, "description": "Card expired or amount above available credit"},
         401: {"model": ErrorOut, "description": "Missing, invalid or expired token"},
+        403: {"model": ErrorOut, "description": "Card is blocked"},
         404: {"model": ErrorOut, "description": "Card not found for this user"},
         422: {"description": "Validation error (amount, currency, card_id)"},
     },
 )
 def make_payment(
     payload: PaymentIn,
+    background_tasks: BackgroundTasks,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
@@ -175,9 +193,21 @@ def make_payment(
     if card is None:
         raise HTTPException(status_code=404, detail="Card not found")
 
+    # A card blocked by an admin cannot be used
+    if card.is_blocked:
+        raise HTTPException(
+            status_code=403, detail="This card is blocked. Please contact support."
+        )
+
     today = utcnow()
     if (card.expiry_year, card.expiry_month) < (today.year, today.month):
         raise HTTPException(status_code=400, detail="Card has expired")
+
+    # The payment must fit inside the available credit
+    if payload.amount > available_credit(db, card):
+        raise HTTPException(
+            status_code=400, detail="Amount exceeds the available credit limit"
+        )
 
     # 1) Create the transaction as PENDING
     now = utcnow()
@@ -206,6 +236,10 @@ def make_payment(
     txn.updated_at = utcnow()
     db.commit()
     db.refresh(txn)
+
+    # 3) Email alerts (large payment, low credit) run in the background
+    if txn.status == "SUCCESS":
+        queue_payment_alerts(background_tasks, db, card, txn, available_credit(db, card))
     return txn
 
 

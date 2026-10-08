@@ -3,6 +3,7 @@
 @theme {
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --color-paper: #f5f6fb;
+  --color-surface: #ffffff;
   --color-ink: #111827;
   --color-muted: #6b7280;
   --color-line: #e5e7eb;
@@ -13,9 +14,30 @@
   --color-bad: #dc2626;
 }
 
+/* Dark values. Contrast is checked against the dark surface (#181b23). */
+:root[data-theme="dark"] {
+  color-scheme: dark; /* dark scrollbars and native form controls */
+  --color-paper: #0f1117;
+  --color-surface: #181b23;
+  --color-ink: #e5e7eb;
+  --color-muted: #9ca3af;
+  --color-line: #2b303b;
+  --color-brand: #6366f1;
+  --color-ok: #34d399;
+  --color-warn: #fbbf24;
+  --color-bad: #f87171;
+}
+
 body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
+}
+
+/* Smooth switching, skipped for people who ask for reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  body, aside, section, input, select, th, td {
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  }
 }

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import Numeric, String
+from sqlalchemy import Boolean, Numeric, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -13,6 +13,16 @@ class Base(DeclarativeBase):
     pass
 
 
+class User(Base):
+    """Read-only mapping of the Django user table, used only to look up the email."""
+
+    __tablename__ = "users"  # accounts.User uses db_table "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(150))
+    email: Mapped[str] = mapped_column(String(254))
+
+
 class Card(Base):
     __tablename__ = "cards"
 
@@ -22,6 +32,7 @@ class Card(Base):
     expiry_month: Mapped[int]
     expiry_year: Mapped[int]
     credit_limit: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Transaction(Base):

@@ -164,8 +164,16 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Email (console backend, no real mail is sent)
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Email (read from .env). Mailpit catches mail at localhost:8025 for the demo.
+# The SMTP password is never written in code, only in .env.
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "1025"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False").lower() == "true"
+EMAIL_TIMEOUT = 10
+DEFAULT_FROM_EMAIL = os.getenv("EMAIL_FROM", "SecurePay <no-reply@securepay.local>")
 
 # Set SECURE_COOKIES=True in .env only when the site is served over HTTPS
 if os.getenv("SECURE_COOKIES", "False") == "True":

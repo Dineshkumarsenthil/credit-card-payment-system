@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
+import ThemeToggle from "./ThemeToggle.jsx";
 
 const link = ({ isActive }) =>
   `block rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`;
@@ -23,13 +24,15 @@ export default function Layout() {
             <NavLink to="/cards" className={link}>Cards</NavLink>
             <NavLink to="/pay" className={link}>Make payment</NavLink>
             <NavLink to="/transactions" className={link}>Transactions</NavLink>
+            <NavLink to="/statements" className={link}>Statements</NavLink>
             {user?.is_staff && <NavLink to="/admin" className={link}>Admin</NavLink>}
           </nav>
         </div>
         <div className="mt-4 border-t border-white/15 pt-4">
           <div className="px-3 text-sm">{user?.username}</div>
           <div className="mb-2 px-3 text-xs text-white/60">{user?.is_staff ? "Administrator" : "Customer"}</div>
-          <button onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10">
+          <ThemeToggle />
+          <button onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
             Log out
           </button>
         </div>
