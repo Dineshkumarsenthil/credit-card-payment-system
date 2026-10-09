@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api, errMsg } from "../api";
+import { api, errMsg } from "../api.js";
 import { Alert, Button, Field, PageHeader, Panel } from "../components/ui.jsx";
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;

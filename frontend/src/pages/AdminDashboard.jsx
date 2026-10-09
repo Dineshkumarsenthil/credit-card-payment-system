@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, errMsg } from "../api";
+import { api, errMsg } from "../api.js";
 import { Alert, Button, Empty, PageHeader, Panel, Select, TxnTable } from "../components/ui.jsx";
 import CardManagement from "../components/CardManagement.jsx";
 import { dateTime, money } from "../utils";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api, errMsg } from "../api";
+import { api, errMsg } from "../api.js";
 import { Alert, AuthShell, Button, Field } from "../components/ui.jsx";
 
 export default function Register() {

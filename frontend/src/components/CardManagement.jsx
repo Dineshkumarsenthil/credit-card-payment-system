@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, errMsg } from "../api";
+import { api, errMsg } from "../api.js";
 import { Alert, Button, Empty, Field, StatusBadge } from "./ui.jsx";
 import { dateTime, money } from "../utils";
 

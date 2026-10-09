@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
-import { errMsg } from "../api";
+import { errMsg } from "../api.js";
 import { Alert, AuthShell, Button, Field } from "../components/ui.jsx";
 
 export default function Login() {

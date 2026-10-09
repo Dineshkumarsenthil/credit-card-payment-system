@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, payApi, errMsg } from "../api";
+import { api, payApi, errMsg } from "../api.js";
 import { Alert, Button, Field, PageHeader, Panel, Select } from "../components/ui.jsx";
 import CardVisual from "../components/CardVisual.jsx";
 import { dateTime, money } from "../utils";

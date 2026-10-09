@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, errMsg } from "../api";
+import { api, errMsg } from "../api.js";
 import CardVisual, { brandOf, fmtNumber } from "../components/CardVisual.jsx";
 import { Alert, Button, Empty, Field, PageHeader, Panel } from "../components/ui.jsx";
 

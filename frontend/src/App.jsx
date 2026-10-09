@@ -9,7 +9,10 @@ import MakePayment from "./pages/MakePayment.jsx";
 import Transactions from "./pages/Transactions.jsx";
 import Statements from "./pages/Statements.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard.jsx";
+import AdminHealth from "./pages/AdminHealth.jsx";
 import { ThemeProvider } from "./theme/ThemeContext.jsx";
+import StaffCards from "./pages/StaffCards.jsx";
 
 export default function App() {
   return (
@@ -23,7 +26,10 @@ export default function App() {
           <Route path="/pay" element={<MakePayment />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/statements" element={<Statements />} />
+          <Route path="/analytics" element={<AnalyticsDashboard />} />
+          <Route path="/system-health" element={<AdminHealth />} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/staff-cards" element={<StaffCards />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

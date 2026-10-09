@@ -3,22 +3,29 @@ import os
 import random
 import time
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from .admin import router as admin_router
+from .analytics import router as analytics_router
 from .auth import get_current_user_id
+from .bootstrap import run_bootstrap
 from .dashboard import router as dashboard_router
 from .database import get_db
+from .fraud import evaluate_transaction
 from .models import Card, Transaction, utcnow
+from .monitoring import MonitoringMiddleware
 from .notifications import queue_payment_alerts
+from .search import router as search_router
 
 SUCCESS_RATE = float(os.getenv("PAYMENT_SUCCESS_RATE", "0.8"))
 FAILURE_REASONS = [
@@ -37,9 +44,18 @@ ALLOWED_ORIGINS = [
 DJANGO_SCHEMA_URL = os.getenv("DJANGO_SCHEMA_URL", "http://127.0.0.1:8000/api/schema/")
 FASTAPI_SCHEMA_URL = os.getenv("FASTAPI_SCHEMA_URL", "http://127.0.0.1:8001/openapi.json")
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Creates the RBAC/log tables, new transaction columns, indexes and roles
+    run_bootstrap()
+    yield
+
+
 app = FastAPI(
     title="Payment System - Payment Service",
-    version="1.0.0",
+    version="1.1.0",
+    lifespan=lifespan,
     # The default /docs page is replaced by the combined page defined below
     docs_url=None,
     description=(
@@ -49,14 +65,21 @@ app = FastAPI(
         "**Authorize** here.\n\n"
         "**Security:** no real payment gateway is used, the CVV is never received "
         "or stored, and users can only pay with their own cards. Blocked cards and "
-        "payments above the available credit are rejected."
+        "payments above the available credit are rejected.\n\n"
+        "**Roles:** `/admin/*` and `/analytics/*` need a staff role "
+        "(admin, support or readonly). Permissions are listed in docs/RBAC_Matrix.md."
     ),
     openapi_tags=[
-        {"name": "System", "description": "Service health"},
+        {"name": "Admin", "description": "Card management, audit logs, fraud logs, health, roles"},
+        {"name": "Transactions", "description": "Search, filter, sort and paginate transactions"},
+        {"name": "Analytics", "description": "Staff analytics and CSV/PDF export"},
         {"name": "Payments", "description": "Create and list simulated payments"},
         {"name": "Dashboard", "description": "Usage summary for the logged-in user"},
+        {"name": "System", "description": "Service health"},
     ],
 )
+# Added first so CORS stays the outermost layer
+app.add_middleware(MonitoringMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -66,6 +89,9 @@ app.add_middleware(
 
 # GET /dashboard/summary
 app.include_router(dashboard_router)
+app.include_router(search_router)
+app.include_router(analytics_router)
+app.include_router(admin_router)
 
 
 SWAGGER_CDN = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5"
@@ -115,6 +141,17 @@ class PaymentIn(BaseModel):
     currency: str = Field(default="INR", pattern="^[A-Z]{3}$",
                           description="3-letter currency code")
     description: str = Field(default="", max_length=255)
+    category: Literal["Shopping", "Food", "Travel", "Bills", "Entertainment", "Other"] = Field(
+        default="Other", description="Spending category (used by analytics)"
+    )
+    location: str | None = Field(
+        default=None, max_length=100,
+        description="City/region of the payment (used by the fraud rules)",
+    )
+    device_id: str | None = Field(
+        default=None, max_length=100,
+        description="Device identifier. If empty, the browser User-Agent is used",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -123,6 +160,8 @@ class PaymentIn(BaseModel):
                 "amount": "250.50",
                 "currency": "INR",
                 "description": "Order #1001",
+                "category": "Shopping",
+                "location": "Chennai",
             }
         }
     }
@@ -135,6 +174,8 @@ class PaymentOut(BaseModel):
     currency: str
     failure_reason: str
     created_at: datetime
+    category: str = "Other"
+    fraud_status: str = "clean"
     model_config = {"from_attributes": True}
 
 
@@ -170,7 +211,8 @@ def health():
     description=(
         "Creates a PENDING transaction, simulates the gateway and stores the "
         "final SUCCESS or FAILED result. The card must belong to the logged-in user, "
-        "must not be expired or blocked, and the amount must fit in the available credit."
+        "must not be expired or blocked, and the amount must fit in the available credit. "
+        "Every payment is checked by the fraud rules and may be marked `flagged`."
     ),
     responses={
         400: {"model": ErrorOut, "description": "Card expired or amount above available credit"},
@@ -182,6 +224,7 @@ def health():
 )
 def make_payment(
     payload: PaymentIn,
+    request: Request,
     background_tasks: BackgroundTasks,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -209,6 +252,8 @@ def make_payment(
             status_code=400, detail="Amount exceeds the available credit limit"
         )
 
+    device = (payload.device_id or request.headers.get("user-agent", ""))[:100] or None
+
     # 1) Create the transaction as PENDING
     now = utcnow()
     txn = Transaction(
@@ -218,6 +263,10 @@ def make_payment(
         amount=payload.amount,
         currency=payload.currency,
         description=payload.description,
+        category=payload.category,
+        location=payload.location,
+        device_id=device,
+        fraud_status="clean",
         status="PENDING",
         failure_reason="",
         created_at=now,
@@ -237,7 +286,14 @@ def make_payment(
     db.commit()
     db.refresh(txn)
 
-    # 3) Email alerts (large payment, low credit) run in the background
+    # 3) Fraud rules: flag, log and email. A failure here never breaks the payment.
+    try:
+        evaluate_transaction(db, txn)
+    except Exception as exc:  # noqa: BLE001
+        db.rollback()
+        print(f"[fraud] evaluation failed: {exc}")
+
+    # 4) Email alerts (large payment, low credit) run in the background
     if txn.status == "SUCCESS":
         queue_payment_alerts(background_tasks, db, card, txn, available_credit(db, card))
     return txn
